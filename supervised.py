@@ -80,7 +80,7 @@ class Supervised_Trainer():
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         
-        acc = corrects*1.0/sample_size
+        acc = corrects.cpu()*1.0/sample_size
         total_loss /= sample_size
 
         acc = np.round(acc, 5)

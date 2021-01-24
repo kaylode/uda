@@ -106,13 +106,13 @@ class Unsupervised_Trainer():
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
+                loss = self.sup_criterion(outputs, targets)
                 total_loss += loss.item()
                 preds = torch.argmax(outputs)
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         
-        acc = corrects*1.0/sample_size
+        acc = corrects.cpu()*1.0/sample_size
         total_loss /= sample_size
 
         acc = np.round(acc, 5)
