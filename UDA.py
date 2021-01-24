@@ -13,8 +13,9 @@ from efficientnet_pytorch import EfficientNet
 
 class Unsupervised_Trainer():
     def __init__(self, cfg):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=10).to(self.device)
+        self.device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
+        self.classes = cfg.classes
+        self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes=len(self.classes)).to(self.device)
         self.sup_criterion = nn.CrossEntropyLoss().to(self.device)
         self.unsup_criterion = nn.KLDivLoss(reduction='batchmean').to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
@@ -24,7 +25,7 @@ class Unsupervised_Trainer():
         self.sup_iter = iter(self.sup_trainloader)
         self.unsup_iter = iter(self.unsup_trainloader)
     
-        self.print_per_iter = 10
+        self.print_per_iter = cfg.print_per_iter
         self.iters = 0
         self.epoch = 0
         self.lamb = cfg.lamb

@@ -21,7 +21,6 @@ class Supervised_Trainer():
         self.num_epochs = cfg.num_epochs
         self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
         self.print_per_iter = cfg.print_per_iter
-        self.save_per_iter = cfg.save_per_iter
         self.checkpoint_path = cfg.checkpoint_path
         self.iters = 0
         self.epoch = 0
