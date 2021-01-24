@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset, Dataset, ConcatDataset
 from torchvision import datasets
-from torchvision.transforms import Compose, ToTensor, Normalize, Pad, RandomCrop, RandomHorizontalFlip, RandomErasing
+from torchvision.transforms import Resize ,Compose, ToTensor, Normalize, Pad, RandomCrop, RandomHorizontalFlip, RandomErasing
 from RandAugment import RandAugment
 
 CIFAR_MEAN_, CIFAR_STD_ = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
@@ -21,15 +21,17 @@ class AddTransform(Dataset):
         x = self.transform(x)
         return x, y
 
-def cifar10_unsupervised_dataloaders():
+def cifar10_unsupervised_dataloaders(cfg):
     print('Data Preparation')
     train_transform = Compose([
+        Resize((cfg.img_size, cfg.img_size)),
         RandomHorizontalFlip(),
         ToTensor(),
         Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
 
     unsupervised_train_transformation = Compose([
+        Resize((cfg.img_size, cfg.img_size)),
         ToTensor(),
         Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
@@ -38,6 +40,7 @@ def cifar10_unsupervised_dataloaders():
     unsupervised_train_transformation.transforms.insert(0, RandAugment(3, 9))
 
     test_transform = Compose([
+        Resize((cfg.img_size, cfg.img_size)),
         ToTensor(),
         Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
@@ -90,7 +93,7 @@ def cifar10_unsupervised_dataloaders():
     # Data loader for labeled and unlabeled train dataset
     train_labelled = DataLoader(
         train_labelled_ds_t,
-        batch_size=64,
+        batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True
@@ -98,7 +101,7 @@ def cifar10_unsupervised_dataloaders():
 
     train_unlabelled = DataLoader(
         train_unlabelled_ds_t,
-        batch_size=64,
+        batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True,
@@ -107,7 +110,7 @@ def cifar10_unsupervised_dataloaders():
 
     train_unlabelled_aug = DataLoader(
        train_unlabelled_aug_ds_t,
-        batch_size=64,
+        batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True,
@@ -120,7 +123,8 @@ def cifar10_unsupervised_dataloaders():
     print('Test set -- Num_samples: {0}'.format(len(cifar10_test_ds)))
 
     test = DataLoader(
-        cifar10_test_ds, batch_size=64,
+        cifar10_test_ds, 
+        batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True
@@ -128,15 +132,15 @@ def cifar10_unsupervised_dataloaders():
 
     return train_labelled, train_unlabelled, train_unlabelled_aug, test
 
-def cifar10_supervised_dataloaders(limit = 0):
+def cifar10_supervised_dataloaders(cfg, limit = 0):
 
     if(limit > 0):
         picks = np.random.permutation(limit)
 
     train_ds = datasets.CIFAR10(root='./data', train=True,
                      transform=Compose([
+                         Resize((cfg.img_size, cfg.img_size)),
                          RandomHorizontalFlip(),
-                      
                          ToTensor(),
                          Normalize(mean=CIFAR_MEAN_,
                                    std=CIFAR_STD_),
@@ -147,7 +151,7 @@ def cifar10_supervised_dataloaders(limit = 0):
 
     train_loader = torch.utils.data.DataLoader(
         train_ds,
-        batch_size=64,
+        batch_size=cfg.batch_size,
         shuffle=True,
         num_workers=8,
         pin_memory=True
@@ -158,11 +162,12 @@ def cifar10_supervised_dataloaders(limit = 0):
 
     val_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10(root='./data', train=False, transform=Compose([
+            Resize((cfg.img_size, cfg.img_size)),
             ToTensor(),
             Normalize(mean=CIFAR_MEAN_,
                                  std=CIFAR_STD_),
         ]), download=True),
-        batch_size=64,
+        batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True

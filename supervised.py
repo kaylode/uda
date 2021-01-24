@@ -13,13 +13,16 @@ from efficientnet_pytorch import EfficientNet
 
 class Supervised_Trainer():
     def __init__(self, cfg):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = EfficientNet.from_pretrained('efficientnet-b0',num_classes=10).to(self.device)
+        self.device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
+        self.classes = cfg.categories
+        self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.1,)
         self.num_epochs = cfg.num_epochs
-        self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders()
-        self.print_per_iter = 10
+        self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
+        self.print_per_iter = cfg.print_per_iter
+        self.save_per_iter = cfg.save_per_iter
+        self.checkpoint_path = cfg.checkpoint_path
         self.iters = 0
         self.epoch = 0
         self.num_iters = (self.num_epochs+1) * len(self.trainloader)
@@ -50,7 +53,7 @@ class Supervised_Trainer():
             running_loss['T'] += loss.item()
             self.iters = len(self.trainloader)*self.epoch + idx + 1
             
-            if idx % self.print_per_iter == 0:
+            if self.iters % self.print_per_iter == 0:
                 for key in running_loss.keys():
                     running_loss[key] /= self.print_per_iter
                     running_loss[key] = np.round(running_loss[key], 5)
@@ -62,6 +65,14 @@ class Supervised_Trainer():
                     "SUP": 0,
                     "T": 0
                 }
+
+            
+
+            
+    def save_model(self, name):
+        if not os.path.exists(self.checkpoint_path):
+            os.makedirs(self.checkpoint_path)
+        torch.save(self.model.state_dict(), name)
 
     def val_epoch(self):
         self.model.eval()
@@ -86,7 +97,7 @@ class Supervised_Trainer():
         acc = np.round(acc, 5)
         total_loss = np.round(total_loss, 5)
         print(f"Validation: Loss: {total_loss} || Accuracy: {acc}")
-
+        self.save_model(os.path.join(self.checkpoint_path, f'supervised_{self.epoch}_{acc}.pth'))
 
     def fit(self):
         for self.epoch in range(self.num_epochs):
@@ -95,6 +106,6 @@ class Supervised_Trainer():
     
 
 if __name__ == '__main__':
-    config = Config('configs/cfg.yaml')
+    config = Config('configs/supervised.yaml')
     trainer = Supervised_Trainer(config)
     trainer.fit()

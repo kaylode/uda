@@ -19,7 +19,7 @@ class Unsupervised_Trainer():
         self.unsup_criterion = nn.KLDivLoss(reduction='batchmean').to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         self.num_epochs = cfg.num_epochs
-        self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders()
+        self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg)
 
         self.sup_iter = iter(self.sup_trainloader)
         self.unsup_iter = iter(self.unsup_trainloader)
@@ -128,6 +128,6 @@ class Unsupervised_Trainer():
     
 
 if __name__ == '__main__':
-    config = Config('configs/cfg.yaml')
+    config = Config('configs/unsupervised.yaml')
     trainer = Unsupervised_Trainer(config)
     trainer.fit()

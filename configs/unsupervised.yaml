@@ -1,0 +1,26 @@
+settings:
+  checkpoint_path: "weights/unsupervised"
+
+  model_name: "efficientnet-b0"
+  device: "cuda:0"
+
+  categories: [
+    "airplane", 
+    "automobile", 
+    "bird", 
+    "cat", 
+    "deer", 
+    "dog",
+    "frog" ,
+    "horse", 
+    "ship",
+    "truck"]
+    
+  num_epochs: 10
+  print_per_iter: 10
+  save_per_iter: 1000
+
+  img_size: 32
+  batch_size: 128
+
+  lamb: 1.0
