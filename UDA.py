@@ -47,12 +47,13 @@ class Unsupervised_Trainer():
             # Unsup batch
             try:
                 sup_inputs, sup_targets = next(self.sup_iter)
+                unsup_inputs, _ = next(self.unsup_iter)
             except StopIteration:
                 self.sup_iter = iter(self.sup_trainloader)
+                self.unsup_iter = iter(self.unsup_trainloader)
                 sup_inputs, sup_targets = next(self.sup_iter)
+                unsup_inputs, _ = next(self.unsup_iter)
                 
-            unsup_inputs, _ = next(self.unsup_iter)
-          
             sup_inputs = sup_inputs.to(self.device)
             sup_targets = sup_targets.to(self.device)
             unsup_inputs = unsup_inputs.to(self.device)
@@ -108,7 +109,7 @@ class Unsupervised_Trainer():
                 outputs = self.model(inputs)
                 loss = self.sup_criterion(outputs, targets)
                 total_loss += loss.item()
-                preds = torch.argmax(outputs)
+                preds = torch.argmax(outputs, dim=1)
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         

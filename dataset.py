@@ -101,7 +101,8 @@ def cifar10_unsupervised_dataloaders():
         batch_size=64,
         shuffle=False,
         num_workers=8,
-        pin_memory=True
+        pin_memory=True,
+        drop_last=True
     )
 
     train_unlabelled_aug = DataLoader(
@@ -109,7 +110,8 @@ def cifar10_unsupervised_dataloaders():
         batch_size=64,
         shuffle=False,
         num_workers=8,
-        pin_memory=True
+        pin_memory=True,
+        drop_last=True
     )
 
     # Data loader for test dataset
