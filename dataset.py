@@ -48,7 +48,7 @@ def cifar10_unsupervised_dataloaders():
     ])
 
     # Train dataset with and without labels
-    cifar10_train_ds = datasets.CIFAR10('/data/', train=True, download=True)
+    cifar10_train_ds = datasets.CIFAR10('./data/', train=True, download=True)
 
     num_classes = len(cifar10_train_ds.classes)
 
@@ -118,7 +118,7 @@ def cifar10_unsupervised_dataloaders():
     )
 
     # Data loader for test dataset
-    cifar10_test_ds = datasets.CIFAR10('/data/', transform=test_transform, train=False, download=True)
+    cifar10_test_ds = datasets.CIFAR10('./data/', transform=test_transform, train=False, download=True)
 
     print('Test set -- Num_samples: {0}'.format(len(cifar10_test_ds)))
 
