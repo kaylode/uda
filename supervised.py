@@ -13,7 +13,8 @@ from efficientnet_pytorch import EfficientNet
 
 class Supervised_Trainer():
     def __init__(self, cfg):
-        self.model = EfficientNet.from_pretrained('efficientnet-b0',num_classes=10)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = EfficientNet.from_pretrained('efficientnet-b0',num_classes=10).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.1,)
         self.num_epochs = cfg.num_epochs
@@ -22,7 +23,6 @@ class Supervised_Trainer():
         self.iters = 0
         self.epoch = 0
         self.num_iters = (self.num_epochs+1) * len(self.trainloader)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def train_epoch(self):
         self.model.train()
@@ -76,7 +76,7 @@ class Supervised_Trainer():
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
                 total_loss += loss.item()
-                preds = torch.argmax(outputs)
+                preds = torch.argmax(outputs, dim=1)
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         
@@ -90,7 +90,7 @@ class Supervised_Trainer():
 
     def fit(self):
         for self.epoch in range(self.num_epochs):
-            # self.train_epoch()
+            self.train_epoch()
             self.val_epoch()
     
 

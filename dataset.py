@@ -5,7 +5,7 @@ from torchvision import datasets
 from torchvision.transforms import Compose, ToTensor, Normalize, Pad, RandomCrop, RandomHorizontalFlip, RandomErasing
 from RandAugment import RandAugment
 
-
+CIFAR_MEAN_, CIFAR_STD_ = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 np.random.seed(2)
 
 class AddTransform(Dataset):
@@ -24,19 +24,14 @@ class AddTransform(Dataset):
 def cifar10_unsupervised_dataloaders():
     print('Data Preparation')
     train_transform = Compose([
-        Pad(4),
-        RandomCrop(32, fill=128),
         RandomHorizontalFlip(),
         ToTensor(),
-        Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-        RandomErasing(scale=(0.1, 0.33)),
+        Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
 
     unsupervised_train_transformation = Compose([
-        Pad(4),
-        RandomCrop(32, fill=128),
         ToTensor(),
-        Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
 
     # RANDAUGMENT
@@ -44,7 +39,7 @@ def cifar10_unsupervised_dataloaders():
 
     test_transform = Compose([
         ToTensor(),
-        Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        Normalize(CIFAR_MEAN_, CIFAR_STD_),
     ])
 
     # Train dataset with and without labels
@@ -139,10 +134,10 @@ def cifar10_supervised_dataloaders(limit = 0):
     train_ds = datasets.CIFAR10(root='./data', train=True,
                      transform=Compose([
                          RandomHorizontalFlip(),
-                         RandomCrop(32, 4),
+                      
                          ToTensor(),
-                         Normalize(mean=[0.485, 0.456, 0.406],
-                                   std=[0.229, 0.224, 0.225]),
+                         Normalize(mean=CIFAR_MEAN_,
+                                   std=CIFAR_STD_),
                      ]), download=True)
 
     if(limit > 0):
@@ -162,8 +157,8 @@ def cifar10_supervised_dataloaders(limit = 0):
     val_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10(root='./data', train=False, transform=Compose([
             ToTensor(),
-            Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225]),
+            Normalize(mean=CIFAR_MEAN_,
+                                 std=CIFAR_STD_),
         ]), download=True),
         batch_size=64,
         shuffle=False,
