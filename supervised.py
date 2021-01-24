@@ -14,7 +14,7 @@ from efficientnet_pytorch import EfficientNet
 class Supervised_Trainer():
     def __init__(self, cfg):
         self.device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
-        self.classes = cfg.categories
+        self.classes = cfg.classes
         self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.1,)
