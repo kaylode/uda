@@ -118,18 +118,18 @@ def cifar10_unsupervised_dataloaders(cfg):
     )
 
     # Data loader for test dataset
-    cifar10_test_ds = datasets.CIFAR10('./data/', transform=test_transform, train=False, download=True)
+    cifar10_test_ds = datasets.CIFAR10('./data/', train=False, download=True)
 
     print('Test set -- Num_samples: {0}'.format(len(cifar10_test_ds)))
+    testset = AddTransform(cifar10_test_ds, test_transform)
 
     test = DataLoader(
-        cifar10_test_ds, 
-        batch_size=cfg.batch_size,
+        testset, 
+        batch_size=cfg.sup_batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True
     )
-
     return train_labelled, train_unlabelled, train_unlabelled_aug, test
 
 def cifar10_supervised_dataloaders(cfg, limit = 0):

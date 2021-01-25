@@ -25,7 +25,8 @@ class Unsupervised_Trainer():
         self.unsup_batch_size = cfg.unsup_batch_size
         self.sup_iter = iter(self.sup_trainloader)
         self.unsup_iter = iter(self.unsup_trainloader)
-    
+        self.checkpoint_path = cfg.checkpoint_path
+        
         self.print_per_iter = cfg.print_per_iter
         self.iters = 0
         self.epoch = 0
@@ -90,6 +91,7 @@ class Unsupervised_Trainer():
             
             num_unsup = torch.sum(unsup_loss_mask, dim=-1)
             if num_unsup == 0.:
+                unsup_loss = torch.FloatTensor([0.])
                 loss = sup_loss            
             else:
                 unsup_loss = torch.sum(unsup_loss * unsup_loss_mask, dim=-1) / torch.sum(unsup_loss_mask, dim=-1)
@@ -125,6 +127,11 @@ class Unsupervised_Trainer():
         values = [l for l in logs.values()]
         self.logger.write(tags= tags, values= values)
 
+    def save_model(self, name):
+        if not os.path.exists(self.checkpoint_path):
+            os.makedirs(self.checkpoint_path)
+        torch.save(self.model.state_dict(), name)
+
     def val_epoch(self):
         self.model.eval()
         corrects = 0
@@ -132,18 +139,18 @@ class Unsupervised_Trainer():
         total_loss = 0
         with torch.no_grad():
             for idx, batch in enumerate(self.valloader):
-                print(batch)
                 inputs, targets = batch
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
+                loss = self.sup_criterion(outputs, targets)
                 total_loss += loss.item()
                 preds = torch.argmax(outputs, dim=1)
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         
-        acc = np.round(acc, 5)
+        acc = corrects.cpu()*1.0/sample_size
+        acc = np.round(float(acc), 5)
         total_loss = np.round(total_loss, 5)
         print(f"Validation: Loss: {total_loss} || Accuracy: {acc}")
         self.logging({
