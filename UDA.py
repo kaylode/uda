@@ -151,7 +151,7 @@ class Unsupervised_Trainer():
         
         acc = corrects.cpu()*1.0/sample_size
         acc = np.round(float(acc), 5)
-        total_loss = np.round(total_loss, 5)
+        total_loss = np.round(total_loss, 5) /sample_size
         print(f"Validation: Loss: {total_loss} || Accuracy: {acc}")
         self.logging({
             "Validation Loss" : total_loss/ len(self.valloader),
