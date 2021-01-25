@@ -25,3 +25,5 @@ settings:
   unsup_batch_size: 64
 
   lamb: 1.0
+  temperature: 0.4
+  beta: 0.8
