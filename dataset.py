@@ -93,7 +93,7 @@ def cifar10_unsupervised_dataloaders(cfg):
     # Data loader for labeled and unlabeled train dataset
     train_labelled = DataLoader(
         train_labelled_ds_t,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.sup_batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True
@@ -101,7 +101,7 @@ def cifar10_unsupervised_dataloaders(cfg):
 
     train_unlabelled = DataLoader(
         train_unlabelled_ds_t,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.unsup_batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True,
@@ -110,7 +110,7 @@ def cifar10_unsupervised_dataloaders(cfg):
 
     train_unlabelled_aug = DataLoader(
        train_unlabelled_aug_ds_t,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.unsup_batch_size,
         shuffle=False,
         num_workers=8,
         pin_memory=True,

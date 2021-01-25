@@ -21,7 +21,8 @@ class Unsupervised_Trainer():
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         self.num_epochs = cfg.num_epochs
         self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg)
-
+        self.batch_size = cfg.batch_size
+        self.unsup_batch_size = cfg.unsup_batch_size
         self.sup_iter = iter(self.sup_trainloader)
         self.unsup_iter = iter(self.unsup_trainloader)
     
@@ -129,6 +130,7 @@ class Unsupervised_Trainer():
 
 
     def fit(self):
+        print(f"Training semi-supervisedly with {len(self.sup_trainloader)} labelled and {len(self.unsup_trainloader)} unlabelled.")
         for self.epoch in range(self.num_epochs):
             self.train_epoch()
             self.val_epoch()

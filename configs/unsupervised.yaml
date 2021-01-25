@@ -21,6 +21,7 @@ settings:
   print_per_iter: 10
 
   img_size: 32
-  batch_size: 128
-
+  sup_batch_size: 64
+  unsup_batch_size: 128
+  
   lamb: 1.0

@@ -23,6 +23,7 @@ class Supervised_Trainer():
         self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
         self.print_per_iter = cfg.print_per_iter
         self.checkpoint_path = cfg.checkpoint_path
+        self.batch_size = cfg.batch_size
         self.iters = 0
         self.epoch = 0
         self.num_iters = (self.num_epochs+1) * len(self.trainloader)
@@ -107,6 +108,7 @@ class Supervised_Trainer():
         self.save_model(os.path.join(self.checkpoint_path, f'supervised_{self.epoch}_{acc}.pth'))
 
     def fit(self):
+        print(f"Training supervisedly with {len(self.trainloader)*self.batch_size} labelled.")
         for self.epoch in range(self.num_epochs):
             self.train_epoch()
             self.val_epoch()
