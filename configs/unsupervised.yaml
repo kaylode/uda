@@ -17,11 +17,11 @@ settings:
     "ship",
     "truck"]
     
-  num_epochs: 10
+  num_epochs: 50
   print_per_iter: 10
 
   img_size: 32
-  sup_batch_size: 64
-  unsup_batch_size: 128
-  
+  sup_batch_size: 128
+  unsup_batch_size: 64
+
   lamb: 1.0
