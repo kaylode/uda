@@ -30,6 +30,7 @@ class Unsupervised_Trainer():
         self.epoch = 0
         self.lamb = cfg.lamb
         self.num_iters = (self.num_epochs+1) * len(self.sup_trainloader)
+        self.logger = Logger(log_dir=cfg.log_dir)
 
     def train_epoch(self):
         self.model.train()
@@ -83,19 +84,23 @@ class Unsupervised_Trainer():
             running_loss['T'] += loss.item()
             self.iters = len(self.sup_trainloader)*self.epoch + idx + 1
             
-            if idx % self.print_per_iter == 0:
+            if self.iters % self.print_per_iter == 0:
                 for key in running_loss.keys():
                     running_loss[key] /= self.print_per_iter
                     running_loss[key] = np.round(running_loss[key], 5)
                 loss_string = '{}'.format(running_loss)[1:-1].replace("'",'').replace(",",' ||')
                 print("[{}|{}] [{}|{}] || {} || Time: {:10.4f}s".format(self.epoch, self.num_epochs, self.iters, self.num_iters, loss_string, running_time))
-                
+                self.logging({"Training Loss" : running_loss['T']/ self.print_per_iter,})
                 running_time = 0
                 running_loss = {
                     "SUP": 0,
-                    "UNSUP":0,
                     "T": 0
                 }
+
+    def logging(self, logs):
+        tags = [l for l in logs.keys()]
+        values = [l for l in logs.values()]
+        self.logger.write(tags= tags, values= values)
 
     def val_epoch(self):
         self.model.eval()
@@ -108,18 +113,19 @@ class Unsupervised_Trainer():
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 outputs = self.model(inputs)
-                loss = self.sup_criterion(outputs, targets)
+                loss = self.criterion(outputs, targets)
                 total_loss += loss.item()
                 preds = torch.argmax(outputs, dim=1)
                 corrects += (preds == targets).sum()
                 sample_size += outputs.size(0)
         
-        acc = corrects.cpu()*1.0/sample_size
-        total_loss /= sample_size
-
         acc = np.round(acc, 5)
         total_loss = np.round(total_loss, 5)
         print(f"Validation: Loss: {total_loss} || Accuracy: {acc}")
+        self.logging({
+            "Validation Loss" : total_loss/ len(self.valloader),
+            "Validation Accuracy": acc})
+        self.save_model(os.path.join(self.checkpoint_path, f'supervised_{self.epoch}_{acc}.pth'))
 
 
     def fit(self):

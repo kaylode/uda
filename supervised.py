@@ -7,6 +7,7 @@ from torch import nn
 from torch.backends import cudnn
 from torch.utils.tensorboard import SummaryWriter
 from configs import Config
+from loggers import Logger
 import dataset as dataset
 from efficientnet_pytorch import EfficientNet
 
@@ -17,7 +18,7 @@ class Supervised_Trainer():
         self.classes = cfg.classes
         self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.1,)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001,)
         self.num_epochs = cfg.num_epochs
         self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
         self.print_per_iter = cfg.print_per_iter
@@ -25,6 +26,7 @@ class Supervised_Trainer():
         self.iters = 0
         self.epoch = 0
         self.num_iters = (self.num_epochs+1) * len(self.trainloader)
+        self.logger = Logger(log_dir=cfg.log_dir)
 
     def train_epoch(self):
         self.model.train()
@@ -58,14 +60,17 @@ class Supervised_Trainer():
                     running_loss[key] = np.round(running_loss[key], 5)
                 loss_string = '{}'.format(running_loss)[1:-1].replace("'",'').replace(",",' ||')
                 print("[{}|{}] [{}|{}] || {} || Time: {:10.4f}s".format(self.epoch, self.num_epochs, self.iters, self.num_iters, loss_string, running_time))
-                
+                self.logging({"Training Loss" : running_loss['T']/ self.print_per_iter,})
                 running_time = 0
                 running_loss = {
                     "SUP": 0,
                     "T": 0
                 }
 
-            
+    def logging(self, logs):
+        tags = [l for l in logs.keys()]
+        values = [l for l in logs.values()]
+        self.logger.write(tags= tags, values= values)
 
             
     def save_model(self, name):
@@ -96,6 +101,9 @@ class Supervised_Trainer():
         acc = np.round(acc, 5)
         total_loss = np.round(total_loss, 5)
         print(f"Validation: Loss: {total_loss} || Accuracy: {acc}")
+        self.logging({
+            "Validation Loss" : total_loss/ len(self.valloader),
+            "Validation Accuracy": acc})
         self.save_model(os.path.join(self.checkpoint_path, f'supervised_{self.epoch}_{acc}.pth'))
 
     def fit(self):
