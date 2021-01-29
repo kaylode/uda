@@ -19,6 +19,7 @@ class Supervised_Trainer():
         self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001,)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.1)
         self.num_epochs = cfg.num_epochs
         self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
         self.print_per_iter = cfg.print_per_iter
@@ -112,6 +113,7 @@ class Supervised_Trainer():
         for self.epoch in range(self.num_epochs):
             self.train_epoch()
             self.val_epoch()
+            self.scheduler.step()
     
 
 if __name__ == '__main__':

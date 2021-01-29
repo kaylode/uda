@@ -24,6 +24,6 @@ settings:
   sup_batch_size: 128
   unsup_batch_size: 64
 
-  lamb: 1.0
-  temperature: 0.4
+  lamb: 0.5
+  temperature: 0.3
   beta: 0.8
