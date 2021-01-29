@@ -2,7 +2,7 @@ settings:
   checkpoint_path: "weights/supervised"
   log_dir: "loggers/runs/supervised"
   
-  model_name: "efficientnet-b0"
+  model_name: "efficientnet-b2"
   device: "cuda:0"
 
   classes: [
