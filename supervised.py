@@ -11,6 +11,9 @@ from loggers import Logger
 import dataset as dataset
 from efficientnet_pytorch import EfficientNet
 
+parser = argparse.ArgumentParser(description='Pythorch Supervised FULL CIFAR-10 implementation')
+parser.add_argument('--limit', '-l', default=0, type=int, help='limit the number of labelled data used')
+args = parser.parse_args()
 
 class Supervised_Trainer():
     def __init__(self, cfg):
@@ -21,7 +24,7 @@ class Supervised_Trainer():
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001,)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.1)
         self.num_epochs = cfg.num_epochs
-        self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg)
+        self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg, limit=args.limit)
         self.print_per_iter = cfg.print_per_iter
         self.checkpoint_path = cfg.checkpoint_path
         self.batch_size = cfg.batch_size

@@ -27,3 +27,5 @@ settings:
   lamb: 0.5
   temperature: 0.3
   beta: 0.8
+
+  num_items: 10000

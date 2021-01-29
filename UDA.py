@@ -11,6 +11,11 @@ import dataset as dataset
 from efficientnet_pytorch import EfficientNet
 from loggers import Logger
 
+parser = argparse.ArgumentParser(description='Pythorch Supervised FULL CIFAR-10 implementation')
+parser.add_argument('--limit', '-l', default=10000, type=int, help='limit the number of labelled data used')
+args = parser.parse_args()
+
+
 class Unsupervised_Trainer():
     def __init__(self, cfg):
         self.device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
@@ -21,7 +26,7 @@ class Unsupervised_Trainer():
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.1)
         self.num_epochs = cfg.num_epochs
-        self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg)
+        self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg, limit=args.limit)
         self.sup_batch_size = cfg.sup_batch_size
         self.unsup_batch_size = cfg.unsup_batch_size
         self.sup_iter = iter(self.sup_trainloader)
@@ -68,8 +73,9 @@ class Unsupervised_Trainer():
 
             sup_outputs = self.model(sup_inputs)
 
-            unsup_y_pred = self.model(unsup_inputs).detach()
-            unsup_y_probas = torch.softmax(unsup_y_pred, dim=-1)
+            with torch.no_grad():
+                unsup_y_pred = self.model(unsup_inputs)
+            unsup_y_probas = torch.softmax(unsup_y_pred, dim=-1).detach()
 
             unsup_aug_y_pred = self.model(unsup_aug_inputs)
             unsup_aug_y_probas = torch.log_softmax(unsup_aug_y_pred, dim=-1)

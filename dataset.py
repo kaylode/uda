@@ -21,7 +21,7 @@ class AddTransform(Dataset):
         x = self.transform(x)
         return x, y
 
-def cifar10_unsupervised_dataloaders(cfg):
+def cifar10_unsupervised_dataloaders(cfg, limit=0):
     print('Data Preparation')
     train_transform = Compose([
         Resize((cfg.img_size, cfg.img_size)),
@@ -57,7 +57,7 @@ def cifar10_unsupervised_dataloaders(cfg):
 
     indices = np.random.permutation(len(cifar10_train_ds))
     class_counters = list([0] * num_classes)
-    max_counter = 10000 // num_classes
+    max_counter = limit // num_classes
 
     for i in indices:
         dp = cifar10_train_ds[i]
@@ -132,8 +132,8 @@ def cifar10_unsupervised_dataloaders(cfg):
     )
     return train_labelled, train_unlabelled, train_unlabelled_aug, test
 
-def cifar10_supervised_dataloaders(cfg, limit = 0):
-
+def cifar10_supervised_dataloaders(cfg, limit=0):
+    
     if(limit > 0):
         picks = np.random.permutation(limit)
 
