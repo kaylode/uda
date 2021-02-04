@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset, Dataset, ConcatDataset
 from torchvision import datasets
-from torchvision.transforms import Resize ,Compose, ToTensor, Normalize, Pad, RandomCrop, RandomHorizontalFlip, RandomErasing
+from torchvision.transforms import RandomErasing, Pad, RandomCrop, Resize ,Compose, ToTensor, Normalize, Pad, RandomCrop, RandomHorizontalFlip, RandomErasing
 from RandAugment import RandAugment
 
 CIFAR_MEAN_, CIFAR_STD_ = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
@@ -24,13 +24,18 @@ class AddTransform(Dataset):
 def cifar10_unsupervised_dataloaders(cfg, limit=0):
     print('Data Preparation')
     train_transform = Compose([
+        Pad(4),
+        RandomCrop(32, fill=128),
         Resize((cfg.img_size, cfg.img_size)),
         RandomHorizontalFlip(),
         ToTensor(),
         Normalize(CIFAR_MEAN_, CIFAR_STD_),
+        RandomErasing(scale=(0.1, 0.33)),
     ])
 
     unsupervised_train_transformation = Compose([
+        Pad(4),
+        RandomCrop(32, fill=128),
         Resize((cfg.img_size, cfg.img_size)),
         ToTensor(),
         Normalize(CIFAR_MEAN_, CIFAR_STD_),
