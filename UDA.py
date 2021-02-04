@@ -23,7 +23,7 @@ class Unsupervised_Trainer():
         self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes=len(self.classes)).to(self.device)
         self.sup_criterion = nn.CrossEntropyLoss().to(self.device)
         self.unsup_criterion = nn.KLDivLoss(reduction='none').to(self.device)
-        self.optimizer = torch.optim.SGD(model.parameters(),
+        self.optimizer = torch.optim.SGD(self.model.parameters(),
                                 lr=0.1,
                                 momentum=0.9,
                                 weight_decay=1e-4,

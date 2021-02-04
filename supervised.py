@@ -22,7 +22,7 @@ class Supervised_Trainer():
         self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.num_epochs = cfg.num_epochs
-        self.optimizer = torch.optim.SGD(model.parameters(),
+        self.optimizer = torch.optim.SGD(self.model.parameters(),
                                 lr=0.1,
                                 momentum=0.9,
                                 weight_decay=1e-4,
