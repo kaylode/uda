@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from configs import Config
 from loggers import Logger
 import dataset as dataset
+from networks import wideresnet
 from efficientnet_pytorch import EfficientNet
 
 parser = argparse.ArgumentParser(description='Pythorch Supervised FULL CIFAR-10 implementation')
@@ -19,7 +20,7 @@ class Supervised_Trainer():
     def __init__(self, cfg):
         self.device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
         self.classes = cfg.classes
-        self.model = EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
+        self.model = wideresnet().to(self.device) #EfficientNet.from_pretrained(cfg.model_name, num_classes = len(self.classes)).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.num_epochs = cfg.num_epochs
         self.optimizer = torch.optim.SGD(self.model.parameters(),
