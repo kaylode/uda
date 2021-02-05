@@ -14,8 +14,9 @@ python supervised.py
 python UDA.py --limit=10000
 ```
 
-## Results: (Efficientnet-b0)
+## Results: (WideResnet28-2)
 Method | Dataset | No. labeleds | No. unlabeleds| Accuracy
 --- | --- | --- | --- | ---
-Supervised | CIFAR-10 | 50000 | 0 | 0
-UDA | CIFAR-10 | 10000 | 40000 | 0
+Supervised | CIFAR-10 | 50000 | 0 | 0.92
+Supervised | CIFAR-10 | 10000 | 0 | 0.786
+UDA | CIFAR-10 | 10000 | 40000 | 0.714
