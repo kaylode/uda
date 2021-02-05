@@ -1,1 +1,1 @@
-from wideresnet import wideresnet
+from .wideresnet import wideresnet
