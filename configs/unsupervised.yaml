@@ -2,7 +2,7 @@ settings:
   checkpoint_path: "weights/unsupervised"
   log_dir: "loggers/runs/unsupervised"
   
-  model_name: "efficientnet-b2"
+  model_name: "wideresnet"
   device: "cuda:0"
 
   classes: [
@@ -21,7 +21,7 @@ settings:
   print_per_iter: 10
 
   img_size: 32
-  sup_batch_size: 128
+  sup_batch_size: 64
   unsup_batch_size: 64
 
   lamb: 0.5

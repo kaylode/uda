@@ -25,17 +25,14 @@ class Unsupervised_Trainer():
         self.sup_criterion = nn.CrossEntropyLoss().to(self.device)
         self.unsup_criterion = nn.KLDivLoss(reduction='none').to(self.device)
         self.optimizer = torch.optim.SGD(self.model.parameters(),
-                                lr=0.1,
+                                lr=0.001,
                                 momentum=0.9,
                                 weight_decay=1e-4,
                                 nesterov=True)
         self.num_epochs = cfg.num_epochs
         self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg, limit=args.limit)
 
-        t_max = len(self.sup_trainloader) * self.num_epochs
-        eta_min = 0.03 * 0.004
-
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=t_max, eta_min=eta_min)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=30, gamma=0.1)
 
         self.sup_batch_size = cfg.sup_batch_size
         self.unsup_batch_size = cfg.unsup_batch_size
@@ -83,8 +80,7 @@ class Unsupervised_Trainer():
 
             sup_outputs = self.model(sup_inputs)
 
-            with torch.no_grad():
-                unsup_y_pred = self.model(unsup_inputs)
+            unsup_y_pred = self.model(unsup_inputs).detach()
             unsup_y_probas = torch.softmax(unsup_y_pred, dim=-1).detach()
 
             unsup_aug_y_pred = self.model(unsup_aug_inputs)

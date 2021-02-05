@@ -21,4 +21,4 @@ settings:
   print_per_iter: 10
 
   img_size: 32
-  batch_size: 128
+  batch_size: 64

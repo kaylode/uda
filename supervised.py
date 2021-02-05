@@ -24,16 +24,13 @@ class Supervised_Trainer():
         self.criterion = nn.CrossEntropyLoss()
         self.num_epochs = cfg.num_epochs
         self.optimizer = torch.optim.SGD(self.model.parameters(),
-                                lr=0.1,
+                                lr=0.001,
                                 momentum=0.9,
                                 weight_decay=1e-4,
                                 nesterov=True)
         self.trainloader, self.valloader = dataset.cifar10_supervised_dataloaders(cfg, limit=args.limit)
 
-        t_max = len(self.trainloader) * self.num_epochs
-        eta_min = 0.03 * 0.004
-
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=t_max, eta_min=eta_min)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=30, gamma=0.1)
 
         self.print_per_iter = cfg.print_per_iter
         self.checkpoint_path = cfg.checkpoint_path
