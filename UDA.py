@@ -25,7 +25,7 @@ class Unsupervised_Trainer():
         self.sup_criterion = nn.CrossEntropyLoss().to(self.device)
         self.unsup_criterion = nn.KLDivLoss(reduction='none').to(self.device)
         self.optimizer = torch.optim.SGD(self.model.parameters(),
-                                lr=0.001,
+                                lr=0.01,
                                 momentum=0.9,
                                 weight_decay=1e-4,
                                 nesterov=True)
