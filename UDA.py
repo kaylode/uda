@@ -31,7 +31,7 @@ class Unsupervised_Trainer():
         self.num_epochs = cfg.num_epochs
         self.sup_trainloader, self.unsup_trainloader, self.unsup_aug_trainloader, self.valloader = dataset.cifar10_unsupervised_dataloaders(cfg, limit=args.limit)
 
-        t_max = len(self.trainloader) * self.num_epochs
+        t_max = len(self.sup_trainloader) * self.num_epochs
         eta_min = 0.03 * 0.004
 
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=t_max, eta_min=eta_min)
