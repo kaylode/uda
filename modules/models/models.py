@@ -1,4 +1,5 @@
 import timm
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -24,4 +25,17 @@ class BaseTimmModel(nn.Module):
         inputs = batch["imgs"]
         inputs = inputs.to(device)
         outputs = self.model(inputs)
+        return outputs
+
+    def forward_unsup(self, batch, device):
+        inputs = batch["imgs"]
+        aug_inputs = batch["aug_img"]
+        merged_inputs = torch.cat([inputs, aug_inputs], dim=0)
+        merged_inputs = merged_inputs.to(device)
+        features = self.model(merged_inputs)
+
+        bsz = inputs.shape[0]
+        f1, f2 = torch.split(features, [bsz, bsz], dim=0)
+        outputs = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
+
         return outputs

@@ -11,7 +11,7 @@ import time
 from utils.cuda import NativeScaler
 from torch.cuda import amp
 from utils.gradcam import GradCam, show_cam_on_image
-from augmentations import Denormalize
+from datasets.augmentations.transforms import Denormalize
 
 
 class Trainer():
@@ -54,7 +54,11 @@ class Trainer():
         for epoch in range(self.epoch, self.num_epochs):
             try:
                 self.epoch = epoch
-                self.training_epoch()
+                
+                if self.unsup_loader is not None:
+                    self.training_epoch()
+                else:
+                    self.semisup_training_epoch()
 
                 if self.evaluate_per_epoch != 0:
                     if epoch % self.evaluate_per_epoch == 0 and epoch+1 >= self.evaluate_per_epoch:
@@ -81,6 +85,91 @@ class Trainer():
 
         print("Training Completed!")
 
+    def semisup_training_epoch(self):
+        sup_iter = iter(self.trainloader)
+        self.model.train()
+
+        running_loss = {}
+        running_time = 0
+
+        self.optimizer.zero_grad()
+        for i, unsup_batch in enumerate(self.unsup_loader):
+            try:
+                batch = next(sup_iter)
+            except StopIteration:
+                sup_iter = iter(self.trainloader)
+                batch = next(sup_iter)
+
+            start_time = time.time()
+
+            with amp.autocast(enabled=self.use_amp):
+                loss, loss_dict = self.model.training_step(batch, unsup_batch)
+                if self.use_accumulate:
+                    loss /= self.accumulate_steps
+
+            self.model.scaler(loss, self.optimizer)
+
+            if self.use_accumulate:
+                if (i+1) % self.accumulate_steps == 0 or i == len(self.unsup_loader)-1:
+                    self.model.scaler.step(
+                        self.optimizer, clip_grad=self.clip_grad, parameters=self.model.parameters())
+                    self.optimizer.zero_grad()
+
+                    if self.scheduler is not None and not self.step_per_epoch:
+                        self.scheduler.step()
+                        lrl = [x['lr'] for x in self.optimizer.param_groups]
+                        lr = sum(lrl) / len(lrl)
+                        log_dict = {'Training/Learning rate': lr}
+                        self.logging(log_dict, step=self.iters)
+            else:
+                self.model.scaler.step(
+                    self.optimizer, clip_grad=self.clip_grad, parameters=self.model.parameters())
+                self.optimizer.zero_grad()
+                if self.scheduler is not None and not self.step_per_epoch:
+                    self.scheduler.step()
+                    lrl = [x['lr'] for x in self.optimizer.param_groups]
+                    lr = sum(lrl) / len(lrl)
+                    log_dict = {'Training/Learning rate': lr}
+                    self.logging(log_dict, step=self.iters)
+
+            torch.cuda.synchronize()
+
+            end_time = time.time()
+
+            for (key, value) in loss_dict.items():
+                if key in running_loss.keys():
+                    running_loss[key] += value
+                else:
+                    running_loss[key] = value
+
+            running_time += end_time-start_time
+            self.iters = self.start_iter + \
+                len(self.unsup_loader)*self.epoch + i + 1
+            if self.iters % self.print_per_iter == 0:
+
+                for key in running_loss.keys():
+                    running_loss[key] /= self.print_per_iter
+                    running_loss[key] = np.round(running_loss[key], 5)
+                loss_string = '{}'.format(running_loss)[
+                    1:-1].replace("'", '').replace(",", ' ||')
+                print("[{}|{}] [{}|{}] || {} || Time: {:10.4f}s".format(
+                    self.epoch, self.num_epochs, self.iters, self.num_iters, loss_string, running_time))
+                self.logging(
+                    {"Training/Batch Loss": running_loss['T'] / self.print_per_iter, }, step=self.iters)
+                running_loss = {}
+                running_time = 0
+
+            if (self.iters % self.checkpoint.save_per_iter == 0 or self.iters == self.num_iters - 1):
+                print(f'Save model at [{self.epoch}|{self.iters}] to last.pth')
+                self.checkpoint.save(
+                    self.model,
+                    save_mode='last',
+                    epoch=self.epoch,
+                    iters=self.iters,
+                    best_value=self.best_value,
+                    config=self.cfg)
+
+
     def training_epoch(self):
         self.model.train()
 
@@ -88,6 +177,7 @@ class Trainer():
         running_time = 0
 
         self.optimizer.zero_grad()
+        
         for i, batch in enumerate(self.trainloader):
 
             start_time = time.time()
@@ -282,6 +372,7 @@ class Trainer():
         return "\n".join([s0, s1, s2, s5, s6])
 
     def set_attribute(self, kwargs):
+        self.unsup_loader = None
         self.checkpoint = None
         self.scheduler = None
         self.clip_grad = 10.0

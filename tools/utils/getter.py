@@ -1,8 +1,10 @@
-from metrics import *
-from datasets import *
-from models import *
+from torchvision import transforms
+from modules.metrics import *
+from datasets.dataloader import *
+from datasets.dataset import *
+from modules.models import *
+from modules.metrics import *
 from trainer import *
-from augmentations import *
 from loggers import *
 from configs import *
 
@@ -15,11 +17,9 @@ from torch.utils.data import DataLoader
 import math
 import torchvision.models as models
 from torch.optim import SGD, AdamW
-from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR, LambdaLR, ReduceLROnPlateau,OneCycleLR, CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR, LambdaLR, ReduceLROnPlateau, CosineAnnealingWarmRestarts
 from utils.cuda import NativeScaler, get_devices_info
-from losses import get_loss
-
-from .random_seed import seed_everything
+from .seed import seed_everything
 
 
 def get_instance(config, **kwargs):
@@ -103,36 +103,26 @@ def get_lr_scheduler(optimizer, lr_config, **kwargs):
 
 
 def get_dataset_and_dataloader(config):
-
     
-    train_transforms = get_augmentation(config, _type = 'train')
-    val_transforms = get_augmentation(config, _type = 'val')
-    
-    trainset = ImageClassificationDataset(
-        config = config,
-        img_dir = os.path.join('data', config.project_name, config.train_imgs),
-        transforms=train_transforms)
-    
-    valset = ImageClassificationDataset(
-        config = config,
-        img_dir=os.path.join('data', config.project_name, config.val_imgs), 
-        transforms=val_transforms)
+    train_suploader = SupDataloader(
+        config, 
+        root_dir = config.root_dir,
+        type = 'train',
+        batch_size=config.batch_size)
 
-    trainloader = DataLoader(
-        trainset, 
-        batch_size=config.batch_size, 
-        shuffle = True, 
-        collate_fn=trainset.collate_fn, 
-        num_workers= config.num_workers, 
-        pin_memory=True)
+    train_unsuploader = UnsupDataloader(
+        config, 
+        root_dir = config.root_dir,
+        batch_size=config.batch_size)
 
-    valloader = DataLoader(
-        valset, 
-        batch_size=config.batch_size, 
-        shuffle = False,
-        collate_fn=valset.collate_fn, 
-        num_workers= config.num_workers, 
-        pin_memory=True)
+    valloader = SupDataloader(
+        config, 
+        root_dir = config.root_dir,
+        type = 'val',
+        batch_size=config.batch_size)
 
-    return  trainset, valset, trainloader, valloader
+    trainset = train_suploader.dataset
+    valset = valloader.dataset
+
+    return  trainset, valset, train_suploader, train_unsuploader, valloader
 

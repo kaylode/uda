@@ -1,6 +1,6 @@
-import cv2
 import numpy as np
 from torchvision.transforms import transforms as tf
+from torchvision.transforms import RandAugment
 
 MEAN = [0.485, 0.456, 0.406]
 STD = [0.229, 0.224, 0.225]
@@ -28,15 +28,15 @@ class Denormalize(object):
 def get_augmentation(config, _type='train'):
     train_transforms = tf.Compose([
         tf.RandomResizedCrop((config.image_size, config.image_size)),
-        tf.AutoAugment.RandAugment(num_ops = 2, magnitude = 9, num_magnitude_bins = 31), 
+        RandAugment(num_ops = 2, magnitude = 9, num_magnitude_bins = 31), 
+        tf.ToTensor(),
         tf.Normalize(mean=MEAN, std=STD),
-        tf.ToTensor()
     ])
 
     val_transforms = tf.Compose([
         tf.Resize((config.image_size, config.image_size)),
+        tf.ToTensor(),
         tf.Normalize(mean=MEAN, std=STD),
-        tf.ToTensor()
     ])
     
     return train_transforms if _type == 'train' else val_transforms

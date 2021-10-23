@@ -10,12 +10,12 @@ from datasets.augmentations.transforms import Denormalize, get_augmentation
 
 class ImageSet(data.Dataset):
     """
-    Reads a folder of images
+    Reads a folder of images, sup + unsup
     """
-    def __init__(self, config, root_dir, _type='train'):
+    def __init__(self, root_dir, transforms):
         self.root_dir = root_dir
         self.classes = sorted(os.listdir(root_dir))
-        self.transforms = get_augmentation(config, _type)
+        self.transforms = transforms
         self.mapping_classes()
         self.fns = self.load_images()
 
@@ -130,3 +130,93 @@ class ImageSet(data.Dataset):
         return {
             'imgs': images,
             'targets': labels} 
+
+
+class UnsupImageSet(data.Dataset):
+    """
+    Reads a folder of unsup images
+    """
+    def __init__(self, root_dir, transforms, unsup_transforms):
+        self.root_dir = root_dir
+        self.transforms = transforms
+        self.unsup_transforms = unsup_transforms
+        self.fns = self.load_images()
+    
+    def load_images(self):
+        data_list = []
+        img_names = sorted(os.listdir(self.root_dir))
+        for name in img_names:
+            img_path = os.path.join(self.root_dir, name)
+            data_list.append(img_path)
+        return data_list
+    
+    def visualize_item(self, index = None, figsize=(15,15)):
+        """
+        Visualize an image with its bouding boxes by index
+        """
+
+        if index is None:
+            index = np.random.randint(0,len(self.fns))
+        item = self.__getitem__(index)
+        img = item['img']
+
+        # Denormalize and reverse-tensorize
+        normalize = False
+        if self.transforms is not None:
+            for x in self.transforms.transforms:
+                if isinstance(x, tf.Normalize):
+                    normalize = True
+                    denormalize = Denormalize(mean=x.mean, std=x.std)
+
+        # Denormalize and reverse-tensorize
+        if normalize:
+            img = denormalize(img = img)
+
+        self.visualize(img, figsize = figsize)
+
+    
+    def visualize(self, img, figsize=(15,15)):
+        """
+        Visualize an image with its bouding boxes
+        """
+        fig,ax = plt.subplots(figsize=figsize)
+
+        # Display the image
+        ax.imshow(img)
+        plt.show()    
+        
+    def __len__(self):
+        return len(self.fns)
+    
+    def __str__(self):
+        s1 = "Number of samples: " + str(len(self.fns)) + '\n'
+        return s1
+
+    def __getitem__(self, index):
+        img_path = self.fns[index]
+        img = Image.open(img_path).convert('RGB')
+        if self.transforms:
+            aug_img = self.transforms(img)
+
+        if self.unsup_transforms:
+            unsup_img = self.unsup_transforms(img)
+        
+        return {
+            "img" : unsup_img,
+            "aug_img": aug_img
+        }
+
+    def collate_fn(self, batch):
+        """
+         - Note: this need not be defined in this Class, can be standalone.
+            + param batch: an iterable of N sets from __getitem__()
+            + return: a tensor of images, lists of  labels
+        """
+
+        images = torch.stack([b['img'] for b in batch], dim=0)
+        aug_images = torch.stack([b['aug_img'] for b in batch], dim=0)
+
+        return {
+            'imgs': images,
+            'aug_imgs': aug_images
+        } 

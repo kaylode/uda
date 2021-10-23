@@ -1,7 +1,16 @@
-from utils.getter import *
+from tools.utils.getter import *
 import argparse
 import os
 
+parser = argparse.ArgumentParser('Training EfficientDet')
+parser.add_argument('--print_per_iter', type=int, default=300, help='Number of iteration to print')
+parser.add_argument('--val_interval', type=int, default=2, help='Number of epoches between valing phases')
+parser.add_argument('--gradcam_visualization', action='store_true', help='whether to visualize box to ./sample when validating (for debug), default=off')
+parser.add_argument('--save_interval', type=int, default=1000, help='Number of steps between saving')
+parser.add_argument('--resume', type=str, default=None,
+                    help='whether to load weights from a checkpoint, set None to initialize')
+parser.add_argument('--saved_path', type=str, default='./weights')
+parser.add_argument('--freeze_backbone', action='store_true', help='whether to freeze the backbone')
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.fastest = True
@@ -14,19 +23,11 @@ def train(args, config):
     device = torch.device("cuda" if torch.cuda.is_available() else 'cpu')
     devices_info = get_devices_info(config.gpu_devices)
     
-    trainset, valset, trainloader, valloader = get_dataset_and_dataloader(config)
+    trainset, valset, train_suploader, train_unsuploader, valloader = get_dataset_and_dataloader(config)
   
     net = BaseTimmModel(
         name=config.model_name, 
         num_classes=trainset.num_classes)
-
-    # if config.tta:
-    #     config.tta = TTA(
-    #         min_conf=config.min_conf_val, 
-    #         min_iou=config.min_iou_val, 
-    #         postprocess_mode=config.tta_ensemble_mode)
-    # else:
-    #     config.tta = None
 
     metric = [
         AccuracyMetric(),
@@ -35,7 +36,7 @@ def train(args, config):
         F1ScoreMetric(n_classes=trainset.num_classes)
     ]
 
-    criterion = get_loss(config.loss_fn)
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.2)
     optimizer, optimizer_params = get_lr_policy(config.lr_policy)
 
     if config.mixed_precision:
@@ -75,7 +76,7 @@ def train(args, config):
 
     trainer = Trainer(config,
                      model,
-                     trainloader, 
+                     train_suploader, 
                      valloader,
                      checkpoint = Checkpoint(save_per_iter=args.save_interval, path = args.saved_path),
                      best_value=best_value,
@@ -104,15 +105,6 @@ def train(args, config):
     
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('Training EfficientDet')
-    parser.add_argument('--print_per_iter', type=int, default=300, help='Number of iteration to print')
-    parser.add_argument('--val_interval', type=int, default=2, help='Number of epoches between valing phases')
-    parser.add_argument('--gradcam_visualization', action='store_true', help='whether to visualize box to ./sample when validating (for debug), default=off')
-    parser.add_argument('--save_interval', type=int, default=1000, help='Number of steps between saving')
-    parser.add_argument('--resume', type=str, default=None,
-                        help='whether to load weights from a checkpoint, set None to initialize')
-    parser.add_argument('--saved_path', type=str, default='./weights')
-    parser.add_argument('--freeze_backbone', action='store_true', help='whether to freeze the backbone')
     
     args = parser.parse_args()
     config = Config(os.path.join('configs','configs.yaml'))
