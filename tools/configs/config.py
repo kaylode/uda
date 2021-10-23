@@ -3,7 +3,7 @@ import yaml
 class Config():
     def __init__(self, yaml_path):
         yaml_file = open(yaml_path)
-        _attr = yaml.load(yaml_file, Loader=yaml.FullLoader)['settings']
+        _attr = yaml.load(yaml_file, Loader=yaml.FullLoader)
         for key, value in _attr.items():
             self.__dict__[key] = value
 

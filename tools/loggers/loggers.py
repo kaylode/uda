@@ -50,7 +50,21 @@ class Logger():
 
         self.writer.add_figure(tag, image, global_step=step)
 
+    def write_text(self, tag, text, step):
+        """
+        Write a text to tensorboard
+        :param tags: (str) tag for log
+        :param text: (str) text to log
+        :param step: (int) logging step
+        """
+
+        self.writer.add_text(tag, text, global_step=step)
+
     def load(self, old_log):
+        """
+        Load tensorboard from log
+        :param old_log: (str) path to previous log
+        """
         all_log = tflog2pandas(old_log)
 
         for _, row in all_log.iterrows():
@@ -95,6 +109,9 @@ def tflog2pandas(path: str) -> pd.DataFrame:
     return runlog_data
 
 def find_old_log(weight_path):
+    """
+    Find log inside dir
+    """
     pardir = os.path.dirname(weight_path)
     event_paths = glob.glob(os.path.join(pardir, "event*"))
     if len(event_paths) == 0:

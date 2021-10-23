@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import os
 from datetime import datetime
-from configs import config_from_dict
+from tools.config import config_from_dict
 
 class Checkpoint():
     """
@@ -17,7 +17,6 @@ class Checkpoint():
         if self.path is None:
             self.path = os.path.join('weights',datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         
-
     def save(self, model, save_mode='last', **kwargs):
         """
         Save model and optimizer weights
@@ -69,16 +68,12 @@ def load_checkpoint(model, path):
             model.optimizer.load_state_dict(state["optimizer"])
         if model.scaler is not None:
             model.scaler.load_state_dict(state[model.scaler.state_dict_key])
-    except KeyError:
+    except RuntimeError as e:
         try:
-            ret = model.model.load_state_dict(state, strict=False)
+            ret = model.model.load_state_dict(state["model"], strict=False)
         except RuntimeError as e:
             print(f'[Warning] Ignoring {e}')
-    except torch.nn.modules.module.ModuleAttributeError:
-        try:
-            ret = model.load_state_dict(state["model"])
-        except RuntimeError as e:
-            print(f'[Warning] Ignoring {e}')
+            print('Load pretrained weights')
 
     if current_lr is not None and model.optimizer is not None:
         for param_group in model.optimizer.param_groups:
@@ -87,6 +82,9 @@ def load_checkpoint(model, path):
     print("Loaded Successfully!")
 
 def get_epoch_iters(path):
+    """
+    Get epoch and iter from weight path
+    """
     state = torch.load(path)
     epoch_idx = int(state['epoch']) if 'epoch' in state.keys() else 0
     iter_idx = int(state['iters']) if 'iters' in state.keys() else 0
@@ -95,15 +93,21 @@ def get_epoch_iters(path):
     return epoch_idx, iter_idx, best_value
 
 def get_class_names(path):
+    """
+    Get class name from weight 
+    """
     state = torch.load(path)
     class_names = state['class_names'] if 'class_names' in state.keys() else None
     num_classes = len(class_names) if class_names is not None else 1
     return class_names, num_classes
 
-def get_config(path):
+def get_config(path, ignore_keys=[]):
+    """
+    Load config from weight
+    """
     state = torch.load(path)
     config_dict = state['config'] if 'config' in state.keys() else None
     if config_dict is None:
         return None
-    config = config_from_dict(config_dict)
+    config = config_from_dict(config_dict, ignore_keys)
     return config

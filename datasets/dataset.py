@@ -1,26 +1,23 @@
 import torch
 import torch.utils.data as data
+from torchvision.transforms import transforms as tf
+
 import os
+import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-import numpy as np
-import random
-from augmentations.transforms import Denormalize
-import albumentations as A
-import cv2
+from datasets.augmentations.transforms import Denormalize, get_augmentation
 
-class ImageClassificationDataset(data.Dataset):
+class ImageSet(data.Dataset):
     """
     Reads a folder of images
     """
-    def __init__(self, config, img_dir, transforms=None):
-
-        self.dir = img_dir
-        self.classes = os.listdir(img_dir)
-        self.transforms = transforms
+    def __init__(self, config, root_dir, _type='train'):
+        self.root_dir = root_dir
+        self.classes = sorted(os.listdir(root_dir))
+        self.transforms = get_augmentation(config, _type)
         self.mapping_classes()
         self.fns = self.load_images()
-        
 
     def mapping_classes(self):
         self.classes_idx = {}
@@ -31,31 +28,16 @@ class ImageClassificationDataset(data.Dataset):
             self.idx_classes[idx] = cl
             idx += 1
         self.num_classes = len(self.classes)
-        
     
     def load_images(self):
         data_list = []
         for cl in self.classes:
-            img_names = sorted(os.listdir(os.path.join(self.dir,cl)))
+            img_names = sorted(os.listdir(os.path.join(self.root_dir,cl)))
             for name in img_names:
-                img_path = os.path.join(self.dir, cl, name)
+                img_path = os.path.join(self.root_dir, cl, name)
                 data_list.append([img_path, cl])
         return data_list
-        
-    def __getitem__(self, index):
-        img_path, class_name = self.fns[index]
-        label = self.classes_idx[class_name]   
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = img.astype(np.uint8)
-        if self.transforms:
-            item = self.transforms(image=img)
-            img = item['image']
-        label  = torch.LongTensor([label])
-        return {
-            "img" : img,
-            "target" : label}
-    
+
     def count_dict(self):
         cnt_dict = {}
         for cl in self.classes:
@@ -78,7 +60,7 @@ class ImageClassificationDataset(data.Dataset):
         normalize = False
         if self.transforms is not None:
             for x in self.transforms.transforms:
-                if isinstance(x, A.Normalize):
+                if isinstance(x, tf.Normalize):
                     normalize = True
                     denormalize = Denormalize(mean=x.mean, std=x.std)
 
@@ -123,6 +105,17 @@ class ImageClassificationDataset(data.Dataset):
         s1 = "Number of samples: " + str(len(self.fns)) + '\n'
         s2 = "Number of classes: " + str(len(self.classes)) + '\n'
         return s1 + s2
+
+    def __getitem__(self, index):
+        img_path, class_name = self.fns[index]
+        label = self.classes_idx[class_name]   
+        img = Image.open(img_path).convert('RGB')
+        if self.transforms:
+            img = self.transforms(img)
+        label  = torch.LongTensor([label])
+        return {
+            "img" : img,
+            "target" : label}
 
     def collate_fn(self, batch):
         """
