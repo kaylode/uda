@@ -1,4 +1,5 @@
 from tools.utils.getter import *
+from .modules.losses.supconloss import SupConLoss
 import argparse
 import os
 
@@ -44,11 +45,22 @@ def train(args, config):
     else:
         scaler = None
 
-    model = Classifier(
+    # model = Classifier(
+    #         model = net,
+    #         metrics=metric,
+    #         scaler=scaler,
+    #         criterion=criterion,
+    #         optimizer= optimizer,
+    #         optim_params = optimizer_params,     
+    #         device = device)
+    
+    unsup_criterion = SupConLoss()
+    model = SemiClassifier(
             model = net,
             metrics=metric,
             scaler=scaler,
-            criterion=criterion,
+            sup_criterion=criterion,
+            unsup_criterion=unsup_criterion,
             optimizer= optimizer,
             optim_params = optimizer_params,     
             device = device)
@@ -61,7 +73,7 @@ def train(args, config):
         start_epoch, start_iter, best_value = 0, 0, 0.0
         
     scheduler, step_per_epoch = get_lr_scheduler(
-        model.optimizer, 
+        model.optimizer, train_len=len(train_suploader),
         lr_config=config.lr_scheduler,
         num_epochs=config.num_epochs)
 
@@ -78,6 +90,7 @@ def train(args, config):
                      model,
                      train_suploader, 
                      valloader,
+                     unsup_loader=train_unsuploader,
                      checkpoint = Checkpoint(save_per_iter=args.save_interval, path = args.saved_path),
                      best_value=best_value,
                      logger = Logger(log_dir=args.saved_path, resume=old_log),
@@ -107,7 +120,7 @@ def train(args, config):
 if __name__ == '__main__':
     
     args = parser.parse_args()
-    config = Config(os.path.join('configs','configs.yaml'))
+    config = Config('./tools/configs/configs.yaml')
 
     train(args, config)
     

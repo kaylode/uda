@@ -6,11 +6,11 @@ import torch
 from tqdm import tqdm
 from .checkpoint import Checkpoint
 import numpy as np
-from loggers.loggers import Logger
+from tools.loggers.loggers import Logger
 import time
-from utils.cuda import NativeScaler
+from tools.utils.cuda import NativeScaler
 from torch.cuda import amp
-from utils.gradcam import GradCam, show_cam_on_image
+from tools.utils.gradcam import GradCam, show_cam_on_image
 from datasets.augmentations.transforms import Denormalize
 
 
@@ -55,7 +55,7 @@ class Trainer():
             try:
                 self.epoch = epoch
                 
-                if self.unsup_loader is not None:
+                if self.unsup_loader is None:
                     self.training_epoch()
                 else:
                     self.semisup_training_epoch()
@@ -226,6 +226,7 @@ class Trainer():
                     running_loss[key] = value
 
             running_time += end_time-start_time
+            self.iters = self.start_iter + len(self.trainloader)*self.epoch + i + 1
             self.iters = self.start_iter + \
                 len(self.trainloader)*self.epoch + i + 1
             if self.iters % self.print_per_iter == 0:

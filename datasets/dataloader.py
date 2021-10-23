@@ -32,7 +32,7 @@ class UnsupDataloader(data.DataLoader):
 
         self.collate_fn = self.dataset.collate_fn
         
-        super(SupDataloader, self).__init__(
+        super(UnsupDataloader, self).__init__(
             self.dataset,
             batch_size=batch_size,
             num_workers=2,

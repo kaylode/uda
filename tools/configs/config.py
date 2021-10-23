@@ -30,7 +30,7 @@ class Config():
     
 
 def config_from_dict(_dict):
-    config = Config('./configs/configs.yaml')
+    config = Config('./tools/configs/configs.yaml')
     for k,v in _dict.items():
         config.__setattr__(k,v)
     return config
