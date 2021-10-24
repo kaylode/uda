@@ -55,12 +55,21 @@ def train(args, config):
     #         device = device)
     
     unsup_criterion = SupConLoss()
-    model = SemiClassifier(
+    # model = SemiClassifier(
+    #         model = net,
+    #         metrics=metric,
+    #         scaler=scaler,
+    #         sup_criterion=criterion,
+    #         unsup_criterion=unsup_criterion,
+    #         optimizer= optimizer,
+    #         optim_params = optimizer_params,     
+    #         device = device)
+
+    model = UnsupClassifier(
             model = net,
             metrics=metric,
             scaler=scaler,
-            sup_criterion=criterion,
-            unsup_criterion=unsup_criterion,
+            criterion=unsup_criterion,
             optimizer= optimizer,
             optim_params = optimizer_params,     
             device = device)
@@ -90,7 +99,7 @@ def train(args, config):
                      model,
                      train_suploader, 
                      valloader,
-                     unsup_loader=train_unsuploader,
+                    #  unsup_loader=train_unsuploader,
                      checkpoint = Checkpoint(save_per_iter=args.save_interval, path = args.saved_path),
                      best_value=best_value,
                      logger = Logger(log_dir=args.saved_path, resume=old_log),

@@ -113,18 +113,18 @@ def get_dataset_and_dataloader(config):
     
     train_suploader = SupDataloader(
         config, 
-        root_dir = config.root_dir,
+        root_dir = config.train_dir,
         type = 'train',
         batch_size=config.batch_size)
 
     train_unsuploader = UnsupDataloader(
         config, 
-        root_dir = config.root_dir,
+        root_dir = config.unsup_dir,
         batch_size=config.batch_size)
 
     valloader = SupDataloader(
         config, 
-        root_dir = config.root_dir,
+        root_dir = config.val_dir,
         type = 'val',
         batch_size=config.batch_size)
 

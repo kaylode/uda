@@ -1,7 +1,8 @@
 #################   DATASET CONFIG   ###################
 
-root_dir: "/content/data/dogs-vs-cats"
-unsup_dir: "/content/data/dogs-vs-cats-unsup"
+train_dir: "/content/data/dog-vs-cats/train"
+val_dir: "/content/data/dog-vs-cats/val"
+unsup_dir: "/content/data/test"
 
 #################   TRAINING CONFIG   ###################
 
@@ -12,7 +13,7 @@ loss_fn: 'ce' #[ce | focal]
 
 gpu_devices: '0'                     # supports multi-gpus
 num_epochs: 100
-batch_size: 256
+batch_size: 64
 num_workers: 2
 
 image_size: 256              # should be square to prevent bugs [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]

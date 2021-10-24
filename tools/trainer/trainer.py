@@ -169,7 +169,6 @@ class Trainer():
                     best_value=self.best_value,
                     config=self.cfg)
 
-
     def training_epoch(self):
         self.model.train()
 
