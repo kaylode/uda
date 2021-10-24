@@ -1,5 +1,5 @@
 from tools.utils.getter import *
-from .modules.losses.supconloss import SupConLoss
+from modules.losses.supconloss import SupConLoss
 import argparse
 import os
 
