@@ -23,7 +23,7 @@ class BaseModel(nn.Module):
         self.freeze = freeze
         self.metrics = metrics
         self.scaler = scaler
-        if not isinstance(metrics, list):
+        if not isinstance(metrics, list) and metrics is not None:
             self.metrics = [metrics,]
 
         self.optim_params = optim_params if optim_params is not None else {'lr': lr,} 

@@ -49,6 +49,7 @@ class Trainer():
             self.scheduler.last_epoch = start_epoch - 1
 
         self.start_iter = start_iter % len(self.trainloader)
+        self.iters = self.start_iter + len(self.trainloader)*self.epoch + 1
 
         print(f'===========================START TRAINING=================================')
         for epoch in range(self.epoch, self.num_epochs):
@@ -195,8 +196,7 @@ class Trainer():
                     self.optimizer.zero_grad()
 
                     if self.scheduler is not None and not self.step_per_epoch:
-                        self.scheduler.step(
-                            (self.num_epochs + i) / len(self.trainloader))
+                        self.scheduler.step()
                         lrl = [x['lr'] for x in self.optimizer.param_groups]
                         lr = sum(lrl) / len(lrl)
                         log_dict = {'Training/Learning rate': lr}
@@ -206,9 +206,7 @@ class Trainer():
                     self.optimizer, clip_grad=self.clip_grad, parameters=self.model.parameters())
                 self.optimizer.zero_grad()
                 if self.scheduler is not None and not self.step_per_epoch:
-                    # self.scheduler.step()
-                    self.scheduler.step(
-                        (self.num_epochs + i) / len(self.trainloader))
+                    self.scheduler.step()
                     lrl = [x['lr'] for x in self.optimizer.param_groups]
                     lr = sum(lrl) / len(lrl)
                     log_dict = {'Training/Learning rate': lr}
@@ -225,7 +223,7 @@ class Trainer():
                     running_loss[key] = value
 
             running_time += end_time-start_time
-            self.iters = self.start_iter + len(self.trainloader)*self.epoch + i + 1
+            
             self.iters = self.start_iter + \
                 len(self.trainloader)*self.epoch + i + 1
             if self.iters % self.print_per_iter == 0:
@@ -272,8 +270,10 @@ class Trainer():
 
         end_time = time.time()
         running_time = end_time - start_time
-        metric_dict = self.model.get_metric_values()
-        self.model.reset_metrics()
+
+        if self.model.metrics is not None:
+            metric_dict = self.model.get_metric_values()
+            self.model.reset_metrics()
 
         for key in epoch_loss.keys():
             epoch_loss[key] /= len(self.valloader)
@@ -296,17 +296,19 @@ class Trainer():
         log_dict.update(metric_log_dict)
         self.logging(log_dict, step=self.epoch)
 
-        # Save model gives best mAP score
-        if metric_dict['acc'] > self.best_value:
-            self.best_value = metric_dict['acc']
-            self.checkpoint.save(
-                self.model,
-                save_mode='best',
-                epoch=self.epoch,
-                iters=self.iters,
-                best_value=self.best_value,
-                class_names=self.trainloader.dataset.classes,
-                config=self.cfg)
+        if self.model.metrics is not None:
+
+            # Save model gives best mAP score
+            if metric_dict['acc'] > self.best_value:
+                self.best_value = metric_dict['acc']
+                self.checkpoint.save(
+                    self.model,
+                    save_mode='best',
+                    epoch=self.epoch,
+                    iters=self.iters,
+                    best_value=self.best_value,
+                    class_names=self.trainloader.dataset.classes,
+                    config=self.cfg)
 
         if self.visualize_when_val:
             self.visualize_batch()

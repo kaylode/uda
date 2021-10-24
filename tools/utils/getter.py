@@ -128,6 +128,16 @@ def get_dataset_and_dataloader(config):
         type = 'val',
         batch_size=config.batch_size)
 
+    # train_unsuploader = SemiDataloader(
+    #     config, 
+    #     root_dir = config.train_dir,
+    #     batch_size=config.batch_size)
+
+    # valloader = SemiDataloader(
+    #     config, 
+    #     root_dir = config.val_dir,
+    #     batch_size=config.batch_size)
+
     trainset = train_suploader.dataset
     valset = valloader.dataset
 
