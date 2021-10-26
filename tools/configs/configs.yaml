@@ -13,7 +13,7 @@ loss_fn: 'ce' #[ce | focal]
 
 gpu_devices: '0'                     # supports multi-gpus
 num_epochs: 100
-batch_size: 32
+batch_size: 16
 num_workers: 2
 
 image_size: 256              # should be square to prevent bugs [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]

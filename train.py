@@ -35,7 +35,7 @@ def train(args, config):
         AccuracyMetric(decimals=4),
         BalancedAccuracyMetric(num_classes=trainset.num_classes, decimals=4), 
         ConfusionMatrix(trainset.classes), 
-        F1ScoreMetric(n_classes=trainset.num_classes, average='weighted')
+        F1ScoreMetric(average='weighted')
     ]
 
     optimizer, optimizer_params = get_lr_policy(config.lr_policy)
@@ -95,7 +95,7 @@ def train(args, config):
     print(f'Training with {num_gpus} gpu(s)')
     print(devices_info)
     print(f"Start training at [{start_epoch}|{start_iter}]")
-    print(f"Current best MAP: {best_value}")
+    print(f"Current best acc: {best_value}")
     
     trainer.fit(start_epoch = start_epoch, start_iter = start_iter, num_epochs=config.num_epochs, print_per_iter=args.print_per_iter)
 

@@ -4,6 +4,8 @@ import torch.nn as nn
 
 class UDALoss(nn.Module):
     def __init__(self, beta=0., temperature=1., lamb=0.5):
+        super().__init__()
+        self.device = torch.device('cuda')
         self.beta = beta
         self.lamb = lamb
         self.temperature = temperature
