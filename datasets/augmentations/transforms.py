@@ -27,14 +27,15 @@ class Denormalize(object):
 
 def get_augmentation(config, _type='train'):
     train_transforms = tf.Compose([
-        tf.RandomResizedCrop((config.image_size, config.image_size)),
+        tf.Resize((config.image_size, config.image_size)),
+        tf.RandomResizedCrop((224, 224)),
         RandAugment(num_ops = 2, magnitude = 9, num_magnitude_bins = 31), 
         tf.ToTensor(),
         tf.Normalize(mean=MEAN, std=STD),
     ])
 
     val_transforms = tf.Compose([
-        tf.Resize((config.image_size, config.image_size)),
+        tf.Resize((224, 224)),
         tf.ToTensor(),
         tf.Normalize(mean=MEAN, std=STD),
     ])

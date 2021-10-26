@@ -42,11 +42,7 @@ class BaseTimmModel(nn.Module):
         aug_inputs = batch["aug_imgs"]
         merged_inputs = torch.cat([inputs, aug_inputs], dim=0)
         merged_inputs = merged_inputs.to(device)
-        features = self.model.forward_features(merged_inputs)
-        features = self.model.global_pool(features)
-        features = F.normalize(self.embedding_head(features), dim=1)
+        outputs = self.model(merged_inputs)
         bsz = inputs.shape[0]
-        f1, f2 = torch.split(features, [bsz, bsz], dim=0)
-        outputs = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-
-        return outputs
+        ori_outputs, aug_outputs = torch.split(outputs, [bsz, bsz], dim=0)
+        return ori_outputs, aug_outputs

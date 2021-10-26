@@ -4,12 +4,10 @@ import sys
 sys.path.append('..')
 
 class SemiClassifier(BaseModel):
-    def __init__(self, model, sup_criterion=None, unsup_criterion=None, **kwargs):
+    def __init__(self, model, **kwargs):
         super(SemiClassifier, self).__init__(**kwargs)
         self.model = model
         self.model_name = self.model.name
-        self.sup_criterion = sup_criterion
-        self.unsup_criterion = unsup_criterion
         if self.optimizer is not None:
             self.optimizer = self.optimizer(self.parameters(), lr= self.lr)
             self.set_optimizer_params()
@@ -28,15 +26,12 @@ class SemiClassifier(BaseModel):
         # Supervised pipeline
         outputs = self.model(batch, self.device)
         targets =  batch['targets'].to(self.device)
-        loss = self.sup_criterion(outputs, targets)
 
         #Unsupervised pipeline
-        unsup_outputs = self.model.forward_unsup(unsup_batch, self.device)
-        unsup_loss = self.unsup_criterion(unsup_outputs)
+        unsup_outputs, unsup_outputs_aug = self.model.forward_unsup(unsup_batch, self.device)
 
-        total_loss = 0.8 * loss + 0.2 * unsup_loss
-        loss_dict = {'SUP': loss.item(), 'UNSUP':unsup_loss.item(), 'T': total_loss.item()}
-        return total_loss, loss_dict
+        loss, loss_dict = self.criterion(outputs, targets, unsup_outputs, unsup_outputs_aug)
+        return loss, loss_dict
 
     def inference_step(self, batch, return_probs=False):
         outputs = self.model(batch, self.device)
@@ -53,14 +48,7 @@ class SemiClassifier(BaseModel):
         # Supervised pipeline
         outputs = self.model(batch, self.device)
         targets =  batch['targets'].to(self.device)
-        loss = self.sup_criterion(outputs, targets)
-
-        #Unsupervised pipeline
-        # unsup_outputs = self.model.forward_unsup(unsup_batch, self.device)
-        # unsup_loss = self.unsup_criterion(unsup_outputs)
-
-        # total_loss = 0.8 * loss + 0.2 * unsup_loss
-        loss_dict = {'T': loss.item()}
+        loss, loss_dict = self.criterion(outputs, targets)
 
         self.update_metrics(outputs = outputs, targets = targets)
         return loss, loss_dict

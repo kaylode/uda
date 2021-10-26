@@ -1,3 +1,4 @@
+from modules.losses.udaloss import UDALoss
 from tools.utils.getter import *
 from modules.losses.supconloss import SupConLoss
 import argparse
@@ -31,45 +32,19 @@ def train(args, config):
         num_classes=trainset.num_classes)
 
     metric = [
-        AccuracyMetric(),
-        BalancedAccuracyMetric(num_classes=trainset.num_classes), 
+        AccuracyMetric(decimals=4),
+        BalancedAccuracyMetric(num_classes=trainset.num_classes, decimals=4), 
         ConfusionMatrix(trainset.classes), 
-        F1ScoreMetric(n_classes=trainset.num_classes)
+        F1ScoreMetric(n_classes=trainset.num_classes, average='weighted')
     ]
 
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.2)
     optimizer, optimizer_params = get_lr_policy(config.lr_policy)
-
-    if config.mixed_precision:
-        scaler = NativeScaler()
-    else:
-        scaler = None
-
-    # model = Classifier(
-    #         model = net,
-    #         metrics=metric,
-    #         scaler=scaler,
-    #         criterion=criterion,
-    #         optimizer= optimizer,
-    #         optim_params = optimizer_params,     
-    #         device = device)
     
-    unsup_criterion = SupConLoss()
-    # model = SemiClassifier(
-    #         model = net,
-    #         metrics=metric,
-    #         scaler=scaler,
-    #         sup_criterion=criterion,
-    #         unsup_criterion=unsup_criterion,
-    #         optimizer= optimizer,
-    #         optim_params = optimizer_params,     
-    #         device = device)
-
-    model = UnsupClassifier(
+    model = SemiClassifier(
             model = net,
             metrics=metric,
-            scaler=scaler,
-            criterion=unsup_criterion,
+            scaler=NativeScaler(),
+            criterion = UDALoss(lamb=0.5, temperature=0.3, beta=0.8),
             optimizer= optimizer,
             optim_params = optimizer_params,     
             device = device)
@@ -99,7 +74,7 @@ def train(args, config):
                      model,
                      train_suploader, 
                      valloader,
-                    #  unsup_loader=train_unsuploader,
+                     unsup_loader=train_unsuploader,
                      checkpoint = Checkpoint(save_per_iter=args.save_interval, path = args.saved_path),
                      best_value=best_value,
                      logger = Logger(log_dir=args.saved_path, resume=old_log),
